@@ -425,7 +425,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 ref BufferBounds bounds = ref _channel.BufferManager.GetUniformBufferBounds(_isCompute, stageIndex, textureBufferIndex);
 
-                cachedTextureBuffer = MemoryMarshal.Cast<byte, int>(_channel.MemoryManager.Physical.GetSpan(bounds.Address, (int)bounds.Size));
+                cachedTextureBuffer = MemoryMarshal.Cast<byte, int>(_channel.MemoryManager.GetSpan(bounds.GpuVa, (int)bounds.Size));
                 cachedTextureBufferIndex = textureBufferIndex;
 
                 if (samplerBufferIndex == textureBufferIndex)
@@ -439,7 +439,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 ref BufferBounds bounds = ref _channel.BufferManager.GetUniformBufferBounds(_isCompute, stageIndex, samplerBufferIndex);
 
-                cachedSamplerBuffer = MemoryMarshal.Cast<byte, int>(_channel.MemoryManager.Physical.GetSpan(bounds.Address, (int)bounds.Size));
+                cachedSamplerBuffer = MemoryMarshal.Cast<byte, int>(_channel.MemoryManager.GetSpan(bounds.GpuVa, (int)bounds.Size));
                 cachedSamplerBufferIndex = samplerBufferIndex;
             }
         }
@@ -567,7 +567,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                     // Ensure that the buffer texture is using the correct buffer as storage.
                     // Buffers are frequently re-created to accomodate larger data, so we need to re-bind
                     // to ensure we're not using a old buffer that was already deleted.
-                    _channel.BufferManager.SetBufferTextureStorage(stage, hostTexture, texture.Range.GetSubRange(0).Address, texture.Size, bindingInfo, bindingInfo.Format, false);
+                    ulong gpuVa = texturePool.GetDescriptor(textureId).UnpackAddress();
+                    _channel.BufferManager.SetBufferTextureStorage(stage, hostTexture, gpuVa, texture.Size, bindingInfo, bindingInfo.Format, false);
                 }
                 else
                 {
@@ -704,7 +705,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                         format = texture.Format;
                     }
 
-                    _channel.BufferManager.SetBufferTextureStorage(stage, hostTexture, texture.Range.GetSubRange(0).Address, texture.Size, bindingInfo, format, true);
+                    ulong gpuVa = pool.GetDescriptor(textureId).UnpackAddress();
+                    _channel.BufferManager.SetBufferTextureStorage(stage, hostTexture, gpuVa, texture.Size, bindingInfo, format, true);
                 }
                 else
                 {

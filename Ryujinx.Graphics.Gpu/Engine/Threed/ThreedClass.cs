@@ -14,6 +14,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
     class ThreedClass : IDeviceState
     {
         private readonly GpuContext _context;
+        private readonly GpuChannel _channel;
         private readonly GPFifoClass _fifoClass;
         private readonly DeviceStateWithShadow<ThreedClassState> _state;
 
@@ -28,9 +29,11 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
         /// </summary>
         /// <param name="context">GPU context</param>
         /// <param name="channel">GPU channel</param>
+        /// <param name="fifoClass">GPFifo class</param>
         public ThreedClass(GpuContext context, GpuChannel channel, GPFifoClass fifoClass)
         {
             _context = context;
+            _channel = channel;
             _fifoClass = fifoClass;
             _state = new DeviceStateWithShadow<ThreedClassState>(new Dictionary<string, RwCallback>
             {
@@ -118,6 +121,10 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
         public void UpdateState()
         {
             _fifoClass.CreatePendingSyncs();
+
+            // Make sure we are working with the latest memory mappings before binding anything.
+            _channel.MemoryManager.VirtualBufferCache.RefreshMappings();
+
             _cbUpdater.FlushUboDirty();
             _stateUpdater.Update();
         }
